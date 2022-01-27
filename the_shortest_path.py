@@ -49,11 +49,11 @@ def short_path() -> dict:
     return dict_dist
 
 
-def data_output(dict_dist:dict):
+def data_output(dict_dist:dict) -> None:
     '''
     Функция вывода
     :param dict_dist: Словарь вида - {(начальная точка, конечная точка): расстояние между точками}
-    :return:
+    :return: None
     '''
     dict_point = {(0, 2): 'Почтовое отделение', (2, 5): 'Ул. Грибоедова, 104/25', (5, 2): 'Ул. Бейкер стрит, 221б',
                   (6, 6): 'Ул. Большая Садовая, 302-бис', (8, 3): 'Вечнозелёная Аллея, 742'}
@@ -66,8 +66,9 @@ def data_output(dict_dist:dict):
         total += distance
     print()
     print(f'Общая продолжительность пути: {total: .3f}')
+    return None
 
-def output_like_task(dict_dist:dict):
+def output_like_task(dict_dist:dict) -> None:
     '''
     Функция вывода как представленно в задании
     :param dict_dist: Словарь вида - {(начальная точка, конечная точка): расстояние между точками}
@@ -80,6 +81,7 @@ def output_like_task(dict_dist:dict):
     print()
     print('Вывод как в задании:')
     print(f'{string} = {total}')
+    return None
 
 
 data_output(short_path())
