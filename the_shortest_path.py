@@ -34,15 +34,13 @@ def short_path() -> dict:
     '''
     ls_point = [(2, 5), (5, 2), (6, 6), (8, 3)]
     dict_dist = dict()
-    begin = (0, 2)
-    end = 0
+    begin, end = (0, 2), 0
     while len(ls_point):
         dist = calc_dist(begin, ls_point[0])
         for sym in ls_point:
             calc = calc_dist(begin, sym)
             if calc <= dist:
-                dist = calc
-                end = sym
+                dist, end  = calc, sym
         dict_dist[begin, end] = dist
         begin = ls_point.pop(ls_point.index(end))
     dict_dist[end, (0, 2)] = calc_dist(end, (0, 2))
