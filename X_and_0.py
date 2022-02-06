@@ -7,15 +7,12 @@ from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 import random
 
-
-
-Config.set('graphics', 'height', '500')
+Config.set('graphics', 'height', '550')
 Config.set('graphics', 'width', '500')
 Config.set('graphics', 'resizable', '0')
 
+
 class GameApp(App):
-    # x_count, o_count = 0, 0
-    #
     def __init__(self):
         super().__init__()
         self.switch = True
@@ -23,8 +20,30 @@ class GameApp(App):
         self.rules_dict = {'vertical': [[], []], 'horizontal': [[], []],
                            'main_diagonal': [[], []], 'secondary_diagonal': [[], []]}
 
+    def game(self, arg) -> None:
+        """
+        Распределяет очередность хода, ход игрока
+        :param arg: class of button
+        :return: None
+        """
+        arg.disabled = True
+        arg.text = 'X'
+        self.switch = not self.switch
+
+        fail, dict_key = self.rules(arg)
+        if fail:
+            self.show_fail(self.rules_dict[dict_key][0], 'SkyNet')
+        else:
+            fail, dict_key = self.rules(self.comp_turn())
+            if fail:
+                self.show_fail(self.rules_dict[dict_key][1], 'YOU')
+        return None
 
     def comp_turn(self):
+        """
+        Ход компа, случайно генерирует идекс кнопки
+        :return: класс Кнопки
+        """
         comp_button = self.buttons[random.randint(0, 9)][random.randint(0, 9)]
         while comp_button.disabled:
             comp_button = self.buttons[random.randint(0, 9)][random.randint(0, 9)]
@@ -33,8 +52,47 @@ class GameApp(App):
         self.switch = not self.switch
         return comp_button
 
+    def rules(self, arg) -> tuple:
+        """
+        Описывает правила
+        :param arg: класс Кнопки, определяет идекс в массиве кнопок
+        :return: кортеж Проигрыш, Ключ словаря (false, dict_key)
+        """
+        for i in range(len(self.buttons)):
+            try:
+                y = self.buttons[i].index(arg)
+                x = i
+                break
+            except: pass
+        for i in range(10):
+            for j in range(10):
+                if x == i:
+                    fail, dict_key = self.is_fail(self.buttons[i][j], 'horizontal', (i, j))
+                    if fail:
+                        return fail, dict_key
+                if y == j:
+                    fail, dict_key = self.is_fail(self.buttons[i][j], 'vertical', (i, j))
+                    if fail:
+                        return fail, dict_key
+                if (y - j) == (x - i):
+                    fail, dict_key = self.is_fail(self.buttons[i][j], 'secondary_diagonal', (i, j))
+                    if fail:
+                        return fail, dict_key
+                if (i + j) == (x + y):
+                    fail, dict_key = self.is_fail(self.buttons[i][j], 'main_diagonal', (i, j))
+                    if fail:
+                        return fail, dict_key
+        [[v.clear() for v in val] for val in self.rules_dict.values()]
+        return False, 0
 
-    def is_fail(self, button, key, idx):
+    def is_fail(self, button, key: str, idx: tuple) -> tuple:
+        """
+        Определяет проигрышную комбиацию
+        :param button: класс Кнопка
+        :param key: ключ для словаря с индексами отмеченных кнопок
+        :param idx: игдексы отмеченных кнопок
+        :return: кортеж Проигрыш, Ключ Словаря (fail, key)
+        """
         if button.text == 'X':
             self.rules_dict[key][0].append(idx)
             self.rules_dict[key][1].clear()
@@ -44,158 +102,87 @@ class GameApp(App):
         elif button.text == '':
             self.rules_dict[key][1].clear()
             self.rules_dict[key][0].clear()
-        return (len(self.rules_dict[key][0]) == 5 or len(self.rules_dict[key][1]) == 5, key)
+        return len(self.rules_dict[key][0]) == 5 or len(self.rules_dict[key][1]) == 5, key
 
-
-    def rules(self, arg):
-        for i in range(len(self.buttons)):
-            try:
-                y = self.buttons[i].index(arg)
-                x = i
-                break
-            except:
-                pass
-        for i in range(10):
-            for j in range(10):
-                if x == i:
-                    false, dict_key = self.is_fail(self.buttons[i][j], 'horizontal', (i, j))
-                    if false:
-                        return (false, dict_key)
-                if y == j:
-                    false, dict_key = self.is_fail(self.buttons[i][j], 'vertical', (i, j))
-                    if false:
-                        return (false, dict_key)
-                if (y - j) == (x - i):
-                    false, dict_key = self.is_fail(self.buttons[i][j], 'secondary_diagonal', (i, j))
-                    if false:
-                        return (false, dict_key)
-                if (i + j) == (x + y):
-                    false, dict_key = self.is_fail(self.buttons[i][j], 'main_diagonal', (i, j))
-                    if false:
-                        return (false, dict_key)
-        [[v.clear() for v in val] for val in self.rules_dict.values()]
-        return (False, 0)
-
-
-    def show_fail(self, idx_list):
+    def show_fail(self, idx_list: tuple, winner: str) -> None:
+        """
+        Отмечает проигрышную комбинацию
+        :param idx_list: список кортежей индекса кнопок
+        :param winner: строка кто победитель
+        :return: None
+        """
         self.switch = True
         for i, j in idx_list:
             self.buttons[i][j].color = [0, 1, 0, 1]
         self.restart()
-        self.exit_confirmation()
-        # popup = Popup(content=Label(text="I am popup"))
-        # popup.open()
+        self.window_continue(winner)
+        return None
 
-    def game(self, arg):
-        arg.disabled = True
-        arg.text = 'X'
-        self.switch = not self.switch
-
-        fail, dict_key = self.rules(arg)
-        if fail:
-            print('U FAIL, begin?:')
-            self.show_fail(self.rules_dict[dict_key][0])
-        else:
-            fail, dict_key = self.rules(self.comp_turn())
-            if fail:
-                print('COMP FAIL')
-                self.show_fail(self.rules_dict[dict_key][1])
-
-    def restart(self, args=True):
+    def restart(self, args=True) -> None:
+        """
+        Сбрасывает все отметки в первоначальное состояние или отключает кнопки для show_fail()
+        :param args: класс кнопки или bool
+        :return: None
+        """
         self.switch = True
         for row in self.buttons:
             for button in row:
-                if args is bool:
+                if args is True:
                     button.disabled = args
                 else:
                     button.color = [0, 0, 0, 0]
                     button.text = ""
                     button.disabled = False
+        return None
 
+    def window_continue(self, winner: str) -> None:
+        """
+        Всплывающее окно после окончания партии
+        :param winner: строка кто победитель
+        :return: None
+        """
+        layout = GridLayout(rows=4, padding=5)
+        popup_winner = Label(text=f'{winner} WIN!')
+        popup_label = Label(text='Begin New Game?')
+        new_game_button = Button(text='Yes',
+                                 on_press=self.restart)
+        close_button = Button(text='No',
+                              on_press=self.stop)
+        layout.add_widget(popup_winner)
+        layout.add_widget(popup_label)
+        layout.add_widget(new_game_button)
+        layout.add_widget(close_button)
 
-    def exit_confirmation(self):
-        # popup can only have one Widget.  This can be fixed by adding a BoxLayout
-
-        self.box_popup = BoxLayout(orientation='horizontal')
-
-        self.box_popup.add_widget(Label(text="Really exit?"))
-
-        self.box_popup.add_widget(Button(
-            text="Yes",
-            on_press=self.stop,
-            size_hint=(0.215, 0.075)))
-
-        self.box_popup.add_widget(Button(
-            text="No",
-            # on_press=self.popup_exit.dismiss,
-            size_hint=(0.215, 0.075)))
-
-        # self.popup_exit = Popup(title="Exit",
-        #                         content=self.box_popup,
-        #                         size_hint=(0.4, 0.4),
-        #                         auto_dismiss=True)
-        #
-        # self.popup_exit.open()
-        # coordinate = (
-        #     (0, 1, 2), (3, 4, 5), (6, 7, 8),  # X
-        #     (0, 3, 6), (1, 4, 7), (2, 5, 8),  # Y
-        #     (0, 4, 8), (2, 4, 6),  # D
-        # )
-        #
-        # vector = lambda item: [self.buttons[x].text for x in item]
-        #
-        # color = [0, 1, 0, 1]
-        #
-        # for item in coordinate:
-        #     if vector(item).count('X') == 3 or vector(item).count('O') == 3:
-        #         win = True
-        #         for i in item:
-        #             self.buttons[i].color = color
-        #         for button in self.buttons:
-        #             button.disabled = True
-        #         break
-
-    # def restart(self, arg):
-    #     self.switch = True
-    #
-    #     for button in self.buttons:
-    #         button.color = [0, 0, 0, 1]
-    #         button.text = ""
-    #         button.disabled = False
+        popup = Popup(title='GAME OVER',
+                      content=layout,
+                      size_hint=(None, None), size=(200, 200))
+        popup.open()
+        new_game_button.bind(on_press=popup.dismiss)
+        return None
 
     def build(self):
-        self.title = "Обратные крестики-нолики"
-        primary = BoxLayout(orientation="vertical")
-        grid = GridLayout(cols=10, spacing=2, padding=5)
+        self.title = 'Reverse tic-tac-toe'
+        primary = BoxLayout(orientation='vertical')
+        layout_grid = GridLayout(cols=10, spacing=2, padding=5)
 
         for i in range(10):
             for j in range(10):
-                button = Button(
-                    # color=[1, 0, 0, 0],
-                    font_size=12,
-                    disabled=False,
-                    on_press=self.game
-                )
+                button = Button(font_size=12,
+                                disabled=False,
+                                on_press=self.game)
                 self.buttons[i][j] = button
-                grid.add_widget(button)
+                layout_grid.add_widget(button)
 
-        primary.add_widget(grid)
+        layout_buttons = GridLayout(cols=2, size_hint=(1, None), size=(200, 50))
+        layout_buttons.add_widget(Button(text='New Game',
+                                         on_press=self.restart))
 
-        primary.add_widget(
-            Button(
-                text="New Game",
-                size_hint=[1, .1],
-                on_press=self.restart#(flag=True)
-            )
-        )
+        layout_buttons.add_widget(Button(text='Exit',
+                                         on_press=self.stop))
 
-        primary.add_widget(
-            Button(
-                text="Exit",
-                size_hint=[1, .1],
-                on_press=self.stop
-            )
-        )
+        primary.add_widget(layout_grid)
+        primary.add_widget(layout_buttons)
+
         return primary
 
 
