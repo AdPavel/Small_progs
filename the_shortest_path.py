@@ -40,7 +40,7 @@ def short_path() -> dict:
         for sym in ls_point:
             calc = calc_dist(begin, sym)
             if calc <= dist:
-                dist, end  = calc, sym
+                dist, end = calc, sym
         dict_dist[begin, end] = dist
         begin = ls_point.pop(ls_point.index(end))
     dict_dist[end, (0, 2)] = calc_dist(end, (0, 2))
