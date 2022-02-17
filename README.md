@@ -1,4 +1,4 @@
-# YLab
+# Small progs
 tasks from YLab
-1. the_shortest_path.py - Задание Лекции №1
-2. X_and_0.py - Задание Лекции №2
+1. the_shortest_path.py - найти кратчайший путь. Задча комивояжора.
+2. X_and_0.py - игра обратные крестики нолики (поддавки), 5 в ряд. Интерфйес на kivy
